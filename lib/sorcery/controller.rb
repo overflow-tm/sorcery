@@ -26,12 +26,24 @@ module Sorcery
         end
       end
 
+      def login_as(email, password, remember_me: false, as: nil)
+        login(email, password, remember_me, {as: as})
+      end
+
       # Takes credentials and returns a user on successful authentication.
       # Runs hooks after login or failed login.
       def login(*credentials)
         @current_user = nil
 
-        user_class.authenticate(*credentials) do |user, failure_reason|
+        user_klass = user_class
+        if credentials.size == 4
+          opts = credentials[3]
+          if !opts[:as].nil?
+            user_klass = opts[:as]
+          end
+        end
+
+        user_klass.authenticate(*credentials) do |user, failure_reason|
           if failure_reason
             after_failed_login!(credentials)
 
